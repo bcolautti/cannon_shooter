@@ -10,7 +10,7 @@ void setup() {
   noStroke();
   frameRate(60);
   colorMode(HSB, 360, 100, 100); // Modo de color HSB
-  gameManager = new GameManager(frameWidth, frameHeight);
+  gameManager = new GameManager(frameWidth, frameHeight, this);
 }
 
 void draw() {

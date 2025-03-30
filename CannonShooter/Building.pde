@@ -1,3 +1,5 @@
+import models.Ball;
+
 class Building {
   int x, y, width, height;
   boolean[][] grid; // Representa las partes del edificio (true: intacto, false: destruido)
@@ -78,7 +80,7 @@ class Building {
   }
 
   ArrayList<Fragment> checkCollision(Ball ball) {
-    ArrayList<Fragment> fragments = new ArrayList<>();
+    ArrayList<Fragment> fragments = new ArrayList<Fragment>();
     int col = (int) ((ball.x - x) / cellSize);
     int row = (int) ((ball.y - y) / cellSize);
 
