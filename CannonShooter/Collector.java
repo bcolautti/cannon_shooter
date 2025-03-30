@@ -67,7 +67,7 @@ public class Collector {
                 // Actualizar posición
                 b.x += b.vx;
                 b.y += b.vy;
-
+                
                 // Verificar si la bola ha salido del colector
                 if (b.y - b.radius > height) {
                     // Ajustar la posición al sistema global

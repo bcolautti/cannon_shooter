@@ -13,7 +13,6 @@ public class Ball {
     float maxFallSpeed = 10;
     float airResistance = 0.98f;
     float stopThreshold = 0.1f;
-    int collisionCount = 0;
     boolean firstUpdate = true;
     PApplet parent;
 
@@ -74,63 +73,7 @@ public class Ball {
         }
     }
 
-    public void handleCollision() {
-        collisionCount++;
-    }
 
-    public void checkCollisionWith(Ball other) {
-        float dx = other.x - x;
-        float dy = other.y - y;
-        float distance = (float) Math.sqrt(dx * dx + dy * dy);
-        float minDistance = radius + other.radius;
-
-        if (distance < minDistance && distance > 0) {
-            float nx = dx / distance;
-            float ny = dy / distance;
-            float tx = -ny;
-            float ty = nx;
-
-            float v1n = vx * nx + vy * ny;
-            float v1t = vx * tx + vy * ty;
-            float v2n = other.vx * nx + other.vy * ny;
-            float v2t = other.vx * tx + other.vy * ty;
-
-            float restitutionCoefficient = Math.min(this.restitution, other.restitution);
-
-            float massSum = this.mass + other.mass;
-            float massDiff = this.mass - other.mass;
-
-            float v1nAfter = (v1n * massDiff + 2 * other.mass * v2n) / massSum;
-            float v2nAfter = (v2n * (-massDiff) + 2 * this.mass * v1n) / massSum;
-
-            v1nAfter *= restitutionCoefficient;
-            v2nAfter *= restitutionCoefficient;
-
-            float v1nAfterX = v1nAfter * nx;
-            float v1nAfterY = v1nAfter * ny;
-            float v1tAfterX = v1t * tx;
-            float v1tAfterY = v1t * ty;
-
-            float v2nAfterX = v2nAfter * nx;
-            float v2nAfterY = v2nAfter * ny;
-            float v2tAfterX = v2t * tx;
-            float v2tAfterY = v2t * ty;
-
-            vx = v1nAfterX + v1tAfterX;
-            vy = v1nAfterY + v1tAfterY;
-            other.vx = v2nAfterX + v2tAfterX;
-            other.vy = v2nAfterY + v2tAfterY;
-
-            float overlap = minDistance - distance;
-            x -= nx * overlap * (other.mass / massSum);
-            y -= ny * overlap * (other.mass / massSum);
-            other.x += nx * overlap * (this.mass / massSum);
-            other.y += ny * overlap * (this.mass / massSum);
-
-            handleCollision();
-            other.handleCollision();
-        }
-    }
 
     public boolean shouldDisappear() {
         return false;
