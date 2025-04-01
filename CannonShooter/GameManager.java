@@ -4,7 +4,6 @@ import models.Ball;
 
 public class GameManager {
     private Cannon cannon;
-    private ArrayList<Ball> balls;
     private Collector collector;
     private PApplet parent;
 
@@ -13,7 +12,6 @@ public class GameManager {
     private boolean debugMode = false;
     private float gravityForce = 0.2f;
 
-    private CollisionManager collisionManager;
     private BallManager ballManager;
 
     // Constantes para el marco del juego
@@ -24,22 +22,16 @@ public class GameManager {
         this.frameHeight = frameHeight;
         this.parent = parent;
 
+        ballManager = new BallManager(parent);
+        
         initializeCannon();
-        initializeBalls();
         initializeCollector();
-
-        collisionManager = new CollisionManager();
-        ballManager = new BallManager();
     }
 
     private void initializeCannon() {
-        cannon = new Cannon(100, frameHeight - 100, frameWidth, frameHeight, parent);
+        cannon = new Cannon(100, frameHeight - 100, frameWidth, frameHeight, parent, ballManager);
     }
-
-    private void initializeBalls() {
-        balls = new ArrayList<>();
-    }
-
+    
     private void initializeCollector() {
         float collectorWidth = 100;
         float collectorHeight = 150;
@@ -53,11 +45,7 @@ public class GameManager {
     }
 
     public void update() {
-        cannon.update(balls);
-        ballManager.updateBalls(balls, gravityEnabled, gravityForce, collector);
-        collector.update(balls);
-        checkCollectorFull();
-        collisionManager.checkBallCollisions(balls, collector.collectedBalls);
+        cannon.update();
     }
 
     private void checkCollectorFull() {
@@ -69,26 +57,20 @@ public class GameManager {
     public void display() {
         parent.background(128);
         drawGameFrame();
-        collector.display();
         cannon.display();
-        drawBalls();
+        ballManager.updateAndDisplayBalls(true, gravityForce);
+        
         if (debugMode) {
             displayDebugInfo();
         }
     }
 
     private void drawGameFrame() {
-        parent.fill(0);
+        parent.fill(4);
         parent.rect(0, 0, frameWidth, BORDER_WIDTH);
         parent.rect(0, frameHeight - BORDER_WIDTH, frameWidth, BORDER_WIDTH);
         parent.rect(0, 0, BORDER_WIDTH, frameHeight);
         parent.rect(frameWidth - BORDER_WIDTH, 0, BORDER_WIDTH, frameHeight);
-    }
-
-    private void drawBalls() {
-        for (Ball ball : balls) {
-            ball.display(parent);
-        }
     }
 
     private void displayDebugInfo() {
@@ -102,7 +84,7 @@ public class GameManager {
         parent.text("Debug Mode:", frameWidth - 210, 30);
         parent.text("Gravity: " + (gravityEnabled ? "ON" : "OFF"), frameWidth - 210, 50);
         parent.text("Gravity Force: " + gravityForce, frameWidth - 210, 70);
-        parent.text("Ball Count: " + balls.size(), frameWidth - 210, 90);
+        parent.text("Ball Count: " +         ballManager.ballsCount(), frameWidth - 210, 90);
         parent.text("Auto Mode: " + (cannon.autoMode ? "ON" : "OFF"), frameWidth - 210, 130);
         parent.text("Collector Balls: " + collector.getBallCount(), frameWidth - 210, 150);
     }
@@ -124,7 +106,7 @@ public class GameManager {
     public void keyReleased(char key) {
         if (key == ' ' && cannon.charging) {
             if (!cannon.firedWhileCharging) {
-                cannon.fire(balls, cannon.getChargePercentage());
+                cannon.fire(cannon.getChargePercentage());
             }
         }
     }

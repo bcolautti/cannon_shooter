@@ -1,4 +1,4 @@
-import java.util.ArrayList;
+                      import java.util.ArrayList;
 import models.Ball;
 import processing.core.PApplet;
 
@@ -14,10 +14,9 @@ public class BallManager {
     }
 
     public void addBall(Ball ball) {
+    	System.out.println("Balls " + balls.size());
         balls.add(ball);
     }
-    
-    public int ballsCount() {return balls.size();}
 
 
     public void updateAndDisplayBalls(boolean gravityEnabled, float gravityForce) {
@@ -30,32 +29,54 @@ public class BallManager {
             // Verificar colisiones con los bordes del marco.
             checkBallCollisionsWithFrame(ball);
 
+            // Verificar colisiones con el colector.
+       //     checkBallCollisionsWithCollector(ball, collector);
+
             // Verificar colisiones entre bolas.
-            checkBallCollisionsBetweenBalls(ball);
+            checkBallCollisionsBetweenBalls(ball, balls);
+
+            // Verificar si la bola entra en el colector.
+   /*         if (checkCollectorEntry(ball, collector)) {
+                balls.remove(i);
+                collector.addBall(ball);
+                continue;
+            }
+*/
+            // Verificar si la bola debe desaparecer.
+            if (ball.shouldDisappear()) {
+                balls.remove(i);
+            }
 
             // Mostrar la bola.
-            ball.display();
+            ball.display(parent);
+        }
+    }
+    
+
+
+    private void updateBallPhysics(Ball ball, boolean gravityEnabled, float gravityForce) {
+        // Lógica de actualización de la posición y velocidad de la bola.
+    	ball.update(gravityEnabled, gravityForce);
+        // (similar a Ball.update())
+        if (!ball.isInCollector) {
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+
+            if (gravityEnabled && !ball.firstUpdate) {
+                ball.vy += gravityForce;
+                ball.vy = PApplet.constrain(ball.vy, -ball.maxFallSpeed, ball.maxFallSpeed);
+            }
+
+            ball.vx *= ball.airResistance;
+            ball.vy *= ball.airResistance;
+
+            ball.firstUpdate = false;
         }
     }
 
-	private void updateBallPhysics(Ball ball, boolean gravityEnabled, float gravityForce) {
-	    // Lógica de actualización de la posición y velocidad de la bola.
-		 ball.x += ball.vx; 
-		 ball.y += ball.vy;
-	 
-		 if (gravityEnabled && !ball.firstUpdate) { 
-			 ball.vy += gravityForce; 
-			 ball.vy = PApplet.constrain(ball.vy, -ball.maxFallSpeed, ball.maxFallSpeed); 
-		 }
-	 
-		 ball.vx *= ball.airResistance; 
-		 ball.vy *= ball.airResistance;
-		  
-		 ball.firstUpdate = false; 
-	}
-
-	private void checkBallCollisionsWithFrame(Ball ball) {
+    private void checkBallCollisionsWithFrame(Ball ball) {
         // Lógica de colisión con los bordes del marco.
+        // (similar a Ball.update())
         if (ball.x - ball.radius < 20) {
             ball.x = 20 + ball.radius;
             ball.vx *= -ball.restitution;
@@ -86,8 +107,28 @@ public class BallManager {
         }
     }
 
-    private void checkBallCollisionsBetweenBalls(Ball ball) {
+    private void checkBallCollisionsWithCollector(Ball ball, Collector collector) {
+        // Lógica de colisión con los lados del colector.
+        // (similar a BallManager.checkCollectorCollision())
+        if (ball.x - ball.radius < collector.x && ball.y + ball.radius > collector.y && ball.y - ball.radius < collector.y + collector.height) {
+            ball.x = collector.x + ball.radius;
+            ball.vx *= -ball.restitution;
+        }
+
+        if (ball.x + ball.radius > collector.x + collector.width && ball.y + ball.radius > collector.y && ball.y - ball.radius < collector.y + collector.height) {
+            ball.x = collector.x + collector.width - ball.radius;
+            ball.vx *= -ball.restitution;
+        }
+
+        if (ball.y + ball.radius > collector.y + collector.height && ball.x + ball.radius > collector.x && ball.x - ball.radius < collector.x + collector.width) {
+            ball.y = collector.y + collector.height - ball.radius;
+            ball.vy *= -ball.restitution;
+        }
+    }
+
+    private void checkBallCollisionsBetweenBalls(Ball ball, ArrayList<Ball> balls) {
         // Lógica de colisión entre bolas.
+        // (similar a Ball.checkCollisionWith())
         for (Ball other : balls) {
             if (other != ball) {
                 float dx = other.x - ball.x;
@@ -143,5 +184,11 @@ public class BallManager {
                 }
             }
         }
+    }
+
+    private boolean checkCollectorEntry(Ball ball, Collector collector) {
+        boolean withinHorizontalBounds = ball.x + ball.radius > collector.x && ball.x - ball.radius < collector.x + collector.width;
+        boolean enteringFromTop = ball.y + ball.radius > collector.y && ball.y - ball.radius < collector.y + 5;
+        return withinHorizontalBounds && enteringFromTop;
     }
 }

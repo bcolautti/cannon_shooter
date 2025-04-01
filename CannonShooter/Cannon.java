@@ -3,6 +3,7 @@ import java.util.ArrayList;
 import models.Ball;
 
 public class Cannon {
+	BallManager ballManager;
     int x, y, frameWidth, frameHeight;
     float angle = -PApplet.PI / 4; // Ángulo inicial en radianes (-45 grados)
     float cannonLength = 100; // Longitud del cañón
@@ -17,19 +18,20 @@ public class Cannon {
     boolean firedWhileCharging = false; // Indicador si ya disparó durante la carga
     PApplet parent;
 
-    Cannon(int x, int y, int frameWidth, int frameHeight, PApplet parent) {
+    Cannon(int x, int y, int frameWidth, int frameHeight, PApplet parent, BallManager ballmanager) {
         this.x = x;
         this.y = y;
         this.frameWidth = frameWidth;
         this.frameHeight = frameHeight;
         this.parent = parent;
+        this.ballManager = ballmanager;
     }
 
-    void update(ArrayList<Ball> balls) {
+    void update() { 
         if (autoMode) {
             // Movimiento automático del cañón
             if (parent.millis() - lastAutoMoveTime >= 100) {
-                angle += autoMoveDirection * parent.radians(1); // Cambiar ángulo automáticamente
+                angle += autoMoveDirection * PApplet.radians(1); // Cambiar ángulo automáticamente
                 lastAutoMoveTime = parent.millis();
 
                 // Límites del ángulo en radianes
@@ -39,13 +41,13 @@ public class Cannon {
                 // Restringir el ángulo dentro de los límites
                 if (angle > maxAngle || angle < minAngle) {
                     autoMoveDirection *= -1; // Invertir dirección si se exceden los límites
-                    angle = parent.constrain(angle, minAngle, maxAngle);
+                    angle = PApplet.constrain(angle, minAngle, maxAngle);
                 }
             }
 
             // Disparo automático
             if (parent.millis() - lastAutoShotTime >= autoShotInterval) {
-                fire(balls, 1.0f); // Disparar con carga máxima
+                fire(1.0f); // Disparar con carga máxima
                 lastAutoShotTime = parent.millis();
             }
         } else {
@@ -56,7 +58,7 @@ public class Cannon {
             if (charging) {
                 float chargeTime = parent.millis() - chargeStartTime;
                 if (chargeTime >= maxChargeTime && !firedWhileCharging) {
-                    fire(balls, 1.0f); // Disparar automáticamente con carga máxima
+                    fire(1.0f); // Disparar automáticamente con carga máxima
                     firedWhileCharging = true; // Evitar múltiples disparos
                 }
             }
@@ -66,14 +68,14 @@ public class Cannon {
     void followMouse() {
         float dx = parent.mouseX - x;
         float dy = parent.mouseY - y;
-        angle = parent.atan2(dy, dx); // Calcular el ángulo hacia el mouse en radianes
+        angle = PApplet.atan2(dy, dx); // Calcular el ángulo hacia el mouse en radianes
 
         // Límites del ángulo
         float minAngle = -PApplet.PI / 2; // -90 grados
         float maxAngle = 0;             // 0 grados
 
         // Restringir el ángulo dentro de los límites
-        angle = parent.constrain(angle, minAngle, maxAngle);
+        angle = PApplet.constrain(angle, minAngle, maxAngle);
     }
 
     void display() {
@@ -87,7 +89,7 @@ public class Cannon {
         // Dibujar barra de carga si se está cargando
         if (charging) {
             float chargeTime = parent.millis() - chargeStartTime;
-            float chargePercentage = parent.min(chargeTime / maxChargeTime, 1);
+            float chargePercentage = PApplet.min(chargeTime / maxChargeTime, 1);
             float loadedLength = cannonLength * chargePercentage; // Largo de la barra roja
             parent.fill(255, 0, 0); // Color rojo
             parent.rect(0, -10, loadedLength, 20);
@@ -99,13 +101,16 @@ public class Cannon {
         parent.ellipse(x, y, 40, 40);
     }
 
-    void fire(ArrayList<Ball> balls, float chargePercentage) {
+    void fire(float chargePercentage) {
         float initialSpeed = 40 + chargePercentage * 25; // Velocidad inicial basada en la carga
-        float vx = parent.cos(angle) * initialSpeed; // Componente x de la velocidad
-        float vy = parent.sin(angle) * initialSpeed; // Componente y de la velocidad
-        float startX = x + parent.cos(angle) * cannonLength; // Posición inicial x de la bola
-        float startY = y + parent.sin(angle) * cannonLength; // Posición inicial y de la bola
-        balls.add(new Ball(startX, startY, vx, vy, parent)); // Crear la bola y añadirla a la lista
+        float vx = PApplet.cos(angle) * initialSpeed; // Componente x de la velocidad
+        float vy = PApplet.sin(angle) * initialSpeed; // Componente y de la velocidad
+        float startX = x + PApplet.cos(angle) * cannonLength; // Posición inicial x de la bola
+        float startY = y + PApplet.sin(angle) * cannonLength; // Posición inicial y de la bola
+    //    System.out.println("Creando bola en: x=" + startX + ", y=" + startY + ", vx=" + vx + ", vy=" + vy); // Imprimir valores
+        
+        ballManager.addBall(new Ball(startX, startY, vx, vy, parent)); // Crear la bola y añadirla a la lista
+        
         charging = false; // Finalizar la carga tras disparar
         firedWhileCharging = false; // Reiniciar el indicador de disparo
     }
@@ -121,7 +126,7 @@ public class Cannon {
     float getChargePercentage() {
         if (charging) {
             float chargeTime = parent.millis() - chargeStartTime;
-            return parent.min(chargeTime / maxChargeTime, 1); // Devolver el porcentaje de carga (máx 100%)
+            return PApplet.min(chargeTime / maxChargeTime, 1); // Devolver el porcentaje de carga (máx 100%)
         } else {
             return 0;
         }
@@ -135,6 +140,6 @@ public class Cannon {
 
     // Método para devolver el ángulo actual como texto
     String getAngleInfo() {
-        return parent.nf(parent.degrees(angle), 0, 2) + "°"; // Formatear el ángulo en grados con dos decimales
+        return PApplet.nf(PApplet.degrees(angle), 0, 2) + "°"; // Formatear el ángulo en grados con dos decimales
     }
 }
